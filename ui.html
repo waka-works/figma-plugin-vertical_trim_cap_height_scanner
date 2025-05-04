@@ -1,0 +1,287 @@
+<html>
+
+<head>
+  <style>
+    * {
+      box-sizing: border-box;
+      min-width: 0;
+      border-width: 0;
+      border-style: solid;
+    }
+
+    body {
+      margin: 0;
+      padding: 1rem 1.25rem;
+      font: 400 14px Inter, sans-serif;
+      color: hsl(0deg, 0%, 10%);
+    }
+
+    #l-main {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    #scan-result-title {
+      margin-block: 0 0.5rem;
+      height: 1.25rem;
+      font-size: 0.825rem;
+      font-weight: 400;
+    }
+
+    #scan-result-count {
+      margin-right: 4px;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    #scan-result-area {
+      height: 179px;
+    }
+
+    #scan-result-area.is-default,
+    #scan-result-area.is-loading,
+    #scan-result-area.is-empty {
+      border: 1px solid hsl(0deg, 0%, 90%);
+      display: grid;
+      place-items: center;
+      background-color: hsl(0deg, 0%, 96%);
+    }
+
+    #scan-result-area.is-error {
+      padding: 2rem;
+      display: grid;
+      place-items: center;
+      background-color: hsl(4deg, 100%, 94%);
+      font-size: 0.750rem;
+    }
+
+    #scan-result-title.is-error {
+      color: hsl(11deg, 89%, 54%);
+    }
+
+    #scan-result-area-message {
+      font-size: 0.750rem;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    #scan-result-area.is-default #scan-result-area-message {
+      color: hsl(0deg, 0%, 60%);
+    }
+
+    #scan-result-area.is-empty #scan-result-area-message {
+      color: hsl(0deg, 0%, 50%);
+    }
+
+    #scan-result-area.is-error #scan-result-area-message {
+      text-align: left;
+      color: hsl(0deg, 0%, 10%);
+    }
+
+    #scan-result-area.is-result {
+      overflow-y: scroll;
+    }
+
+    #scan-result-area.is-result::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #scan-result-area.is-result::-webkit-scrollbar-thumb {
+      border-radius: 3px 3px;
+      background: hsl(0deg, 0%, 66%);
+    }
+
+    #scan-result-area.is-result::-webkit-scrollbar-thumb:hover {
+      background: hsl(0deg, 0%, 60%);
+    }
+
+    #scan-result-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .scan-result-text {
+      margin-bottom: 0.375rem;
+      padding-block: 0.2rem;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      font-size: 0.750rem;
+      letter-spacing: 0.02rem;
+      text-decoration: underline;
+      color: hsl(205deg, 100%, 45%);
+      cursor: pointer;
+    }
+
+    .scan-result-text:hover {
+      color: hsl(211deg, 93%, 42%);
+    }
+
+    .scan-result-text:visited {
+      color: hsl(266deg, 20%, 51%);
+    }
+
+    .tag {
+      margin-right: 0.5rem;
+      padding: 2px 4px;
+      border-radius: 2px;
+      display: inline-block;
+      font-size: 0.625rem;
+      text-decoration: none;
+    }
+
+    .tag--main-component {
+      border: 1px solid hsl(266deg 100% 64%);
+      color: hsl(266deg 100% 64%);
+    }
+
+    .tag--instance {
+      border: 1px solid hsl(0deg 0% 65%);
+      color: hsl(0deg 0% 65%);
+    }
+
+    #loading-circle {
+      width: 16px;
+      height: 16px;
+      border: 1px hsl(0deg, 0%, 60%) solid;
+      border-top: 1px hsl(0deg, 0%, 20%) solid;
+      border-right: 1px hsl(0deg, 0%, 20%) solid;
+      border-left: 1px hsl(0deg, 0%, 20%) solid;
+      border-radius: 50%;
+      animation: spCircRot 0.6s infinite linear;
+    }
+
+    @keyframes spCircRot {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(359deg);
+      }
+    }
+
+    #scan-button {
+      margin: 1.625rem auto 0;
+      padding: 0.825rem;
+      width: 100%;
+      border-radius: 5px;
+      display: block;
+      background-color: hsl(205deg, 100%, 53%);
+      color: hsl(0deg, 0%, 100%);
+      text-align: center;
+      cursor: pointer;
+    }
+
+    #scan-button:hover {
+      background-color: hsl(208deg, 100%, 45%);
+    }
+  </style>
+
+</head>
+
+<body>
+  <main id="l-main">
+    <h1 id="scan-result-title">Click the "Scan Page" button.</h1>
+    <div id="scan-result-area" class="is-default">
+      <p id="scan-result-area-message">Scan results will appear here.</p>
+    </div>
+    <button id="scan-button">Scan Page</button>
+  </main>
+</body>
+<script>
+
+  const scanTitle = document.getElementById("scan-result-title");
+  const scanArea = document.getElementById("scan-result-area");
+  const scanButton = document.getElementById("scan-button");
+
+  // Initializes the UI to display scan results
+  function resultDisplay(title, areaClassName, areaInner, areaMessage) {
+    scanTitle.classList.remove("is-error");
+    scanTitle.innerHTML = title;
+    scanArea.className = areaClassName;
+    scanArea.innerHTML = "";
+    scanArea.innerHTML = areaInner;
+    if (!areaInner && areaMessage) {
+      const scanAreaMessage = document.createElement("p");
+      scanAreaMessage.id = "scan-result-area-message";
+      scanAreaMessage.textContent = areaMessage;
+      scanArea.appendChild(scanAreaMessage);
+    };
+  };
+
+  // Send button click to code.ts
+  scanButton.onclick = () => {
+    resultDisplay(
+      "Scanning...",
+      "is-loading",
+      `<div id="loading-circle"></div>`,
+      ""
+    );
+    setTimeout(() => {
+      parent.postMessage({ pluginMessage: { type: "from_ui-click_scanButton" } }, "*");
+    }, 100);
+  };
+
+  onmessage = (event) => {
+    // Receive search results
+    if (event.data.pluginMessage.type === "from_code-scan_results") {
+
+      // Display search results
+      scanTitle.classList.remove("is-error");
+      scanTitle.innerHTML = `<span id="scan-result-count">${event.data.pluginMessage.countResult}</span>matching text found.`;
+      scanArea.innerHTML = "";
+
+      let scanResults = event.data.pluginMessage.scanResult;
+      if (scanResults.length > 0) {
+        scanArea.className = "is-result";
+        const createList = document.createElement("ul");
+        createList.id = "scan-result-list";
+        scanArea.appendChild(createList);
+
+        scanResults.forEach((element, index) => {
+          const createListText = document.createElement("li");
+          createListText.className = "scan-result-text";
+          createListText.textContent = scanResults[index].text;
+          // Adds a tag if the search result is a component or an instance
+          if (scanResults[index].ancestorNodeType === "COMPONENT") {
+            createListText.innerHTML =
+              `<span class="tag tag--main-component">Main component</span>${createListText.textContent}`;
+          } else if (scanResults[index].ancestorNodeType === "INSTANCE") {
+            createListText.innerHTML =
+              `<span class="tag tag--instance">Instance</span>${createListText.textContent}`;
+          };
+          // Pass the click event of a search result to code.ts
+          createListText.onclick = () => {
+            parent.postMessage(
+              { pluginMessage: { type: "from_ui-select", nodeId: scanResults[index].id } }, "*");
+          };
+          createList.appendChild(createListText);
+        });
+      } else {
+        // Display when no search results are found
+        scanArea.className = "is-empty";
+        const scanAreaMessage = document.createElement("p");
+        scanAreaMessage.id = "scan-result-area-message";
+        scanAreaMessage.textContent = "No matching text found on this page.";
+        scanArea.appendChild(scanAreaMessage);
+      };
+    };
+    // Display an error message in case of a timeout
+    if (event.data.pluginMessage.type === "from_code-error_timeout") {
+      resultDisplay(
+        event.data.pluginMessage.message,
+        "is-error",
+        "",
+        "Please reduce the number and try again."
+      );
+      scanTitle.classList.add("is-error");
+    };
+  };
+
+</script>
+</body>
+
+</html>
